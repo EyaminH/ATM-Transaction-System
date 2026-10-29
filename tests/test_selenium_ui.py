@@ -43,7 +43,8 @@ class TestSeleniumUIAutomation:
         mock_btn.click.assert_called_once()
 
     def test_selenium_headless_integration(self):
-        """Verifies Selenium WebDriver capability and configuration."""
+        """Verifies Selenium WebDriver capability and configuration if installed."""
+        selenium = pytest.importorskip("selenium", reason="selenium package not installed in environment")
         from selenium.webdriver.chrome.options import Options
         options = Options()
         options.add_argument("--headless=new")
