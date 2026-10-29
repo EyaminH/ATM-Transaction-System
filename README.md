@@ -3,7 +3,7 @@
 A robust, enterprise-grade Automated Teller Machine (ATM) transaction system designed and implemented following the **Software Development Life Cycle (SDLC)** for **CSE 3206 (CO4)**.
 
 [![GitHub Repo](https://img.shields.io/badge/GitHub-ATM--Transaction--System-blue?logo=github)](https://github.com/EyaminH/ATM-Transaction-System)
-![Tests](https://img.shields.io/badge/tests-75%20passed-success)
+![Tests](https://img.shields.io/badge/tests-77%20passed-success)
 ![Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen)
 ![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue)
 ![Patterns](https://img.shields.io/badge/patterns-Creational%20%7C%20Structural%20%7C%20Behavioral-indigo)
@@ -22,7 +22,7 @@ A robust, enterprise-grade Automated Teller Machine (ATM) transaction system des
 2. [5+ Core Functional Modules](#-5-core-functional-modules)
 3. [Design Patterns Across 3 Categories](#-design-patterns-across-3-categories)
 4. [UML Class Diagram](#-uml-class-diagram)
-5. [Software Testing & TDD (75 Tests, 93% Coverage)](#-software-testing--tdd)
+5. [Software Testing & TDD (77 Tests, 93% Coverage)](#-software-testing--tdd)
 6. [External Dependency Mocking & Selenium UI Testing](#-external-dependency-mocking--selenium-ui-testing)
 7. [Configuration Management, PR Reviews & Merge Conflict](#-configuration-management)
 8. [New Tool / Technique (GitHub Actions CI/CD)](#-new-tool--technique-github-actions-cicd)
@@ -201,13 +201,13 @@ classDiagram
 
 ---
 
-## 🧪 Software Testing & TDD
+## 🧪 Software Testing & TDD (77 Tests, 93% Coverage)
 
 All test suites were developed following **Test-Driven Development (TDD)** using `pytest` and `pytest-cov`.
 
 ```bash
 $ pytest
-============================== 75 passed in 0.99s ==============================
+============================== 77 passed in 0.96s ==============================
 TOTAL COVERAGE: 93%
 ```
 
@@ -224,13 +224,14 @@ TOTAL COVERAGE: 93%
 | `atm_system/patterns/observer.py` | 56 | 2 | **96%** | Notification and audit observer subscriptions & updates |
 | `atm_system/app.py` | 64 | 3 | **95%** | App factory, database wiring, Swagger UI registration |
 | `atm_system/patterns/adapter.py` | 30 | 2 | **93%** | Inter-bank legacy payment switch adaptation and verification |
-| `atm_system/patterns/strategy.py` | 117 | 8 | **93%** | Min/max limits, daily limits, balance checks |
+| `atm_system/patterns/strategy.py` | 121 | 8 | **93%** | Min/max limits, daily limits, balance checks, CDM sensor verification |
 | `atm_system/patterns/singleton.py` | 60 | 5 | **92%** | Unique instance in memory, multithreaded concurrency test |
 | `atm_system/services/transaction_service.py` | 51 | 4 | **92%** | Withdraw, deposit, transfer with dual observer alerts |
 | `atm_system/services/auth_service.py` | 71 | 7 | **90%** | SHA-256 hashing, 3-attempt lockout, PIN change |
 | `atm_system/routes/auth_routes.py` | 49 | 5 | **90%** | Authentication, session persistence, logout |
-| `atm_system/routes/transaction_routes.py` | 69 | 9 | **87%** | Form submission, flash messages, quick amount shortcuts |
-| **Total Project Codebase** | **873** | **62** | **93%** | **75 Automated Test Cases** |
+| `atm_system/routes/transaction_routes.py` | 102 | 11 | **89%** | Form submission, flash messages, CDM optical sensor flow |
+| `atm_system/routes/history_routes.py` | 63 | 13 | **79%** | Filtered transaction log, statement metrics, notification read |
+| **Total Project Codebase** | **910** | **64** | **93%** | **77 Automated Test Cases** |
 
 ---
 

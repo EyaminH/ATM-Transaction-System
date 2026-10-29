@@ -11,7 +11,7 @@
 ---
 
 ## Executive Summary
-This report presents the end-to-end engineering, architectural design, implementation, and quality assurance of an enterprise-grade **ATM Transaction System**. The system is built strictly adhering to the **Software Development Life Cycle (SDLC)** principles, incorporating the **Incremental Process Model**, **5 Gang of Four (GoF) Design Patterns across all 3 categories (Creational, Structural, Behavioral)**, **Test-Driven Development (TDD)** yielding **93% line coverage across 75 automated unit and integration tests**, **External Dependency Isolation with Mocks**, **Selenium Automated UI Testing**, formal **Git Configuration Management with Merge Conflict Resolution**, and an automated **GitHub Actions CI/CD Pipeline**.
+This report presents the end-to-end engineering, architectural design, implementation, and quality assurance of an enterprise-grade **ATM Transaction System**. The system is built strictly adhering to the **Software Development Life Cycle (SDLC)** principles, incorporating the **Incremental Process Model**, **5 Gang of Four (GoF) Design Patterns across all 3 categories (Creational, Structural, Behavioral)**, **Test-Driven Development (TDD)** yielding **93% line coverage across 77 automated unit and integration tests**, **External Dependency Isolation with Mocks**, **Selenium Automated UI Testing**, formal **Git Configuration Management with Merge Conflict Resolution**, and an automated **GitHub Actions CI/CD Pipeline**.
 
 ---
 
@@ -247,7 +247,7 @@ Furthermore, automated end-to-end browser UI testing was established using **Sel
 ### 3.3 Test Suite Execution & Coverage Report
 
 ```
-============================== 75 passed in 0.99s ==============================
+============================== 77 passed in 0.96s ==============================
 TOTAL LINE COVERAGE: 93%
 ```
 
@@ -262,13 +262,14 @@ TOTAL LINE COVERAGE: 93%
 | `patterns/observer.py` | 56 | 2 | **96%** | Event subscription, unsubscribe, event broadcasting, DB notifications |
 | `app.py` | 64 | 3 | **95%** | Application factory, singleton DB init, observer subscription, Swagger registration |
 | `patterns/adapter.py` | 30 | 2 | **93%** | Inter-bank legacy payment switch adaptation, settlement, and verification |
-| `patterns/strategy.py` | 117 | 8 | **93%** | Positive amount checks, minimum balance, daily limit calculations, atomic updates |
+| `patterns/strategy.py` | 121 | 8 | **93%** | Positive amount checks, minimum balance, daily limit calculations, atomic updates, CDM validation |
 | `patterns/singleton.py` | 60 | 5 | **92%** | Unique instance in memory, multithreaded concurrency test, reset instance |
 | `services/transaction_service.py` | 51 | 4 | **92%** | Withdrawal, deposit, transfer with dual observer notification dispatch |
 | `services/auth_service.py` | 71 | 7 | **90%** | SHA-256 hashing, 3-attempt lockout with 15-min cooldown, PIN change validation |
 | `routes/auth_routes.py` | 49 | 5 | **90%** | Login form rendering, credential authentication, session clear on logout |
-| `routes/transaction_routes.py` | 69 | 9 | **87%** | Form submission, flash error handling, account selection, quick amounts |
-| **Total Project Codebase** | **873** | **62** | **93%** | **75 Automated Test Cases** |
+| `routes/transaction_routes.py` | 102 | 11 | **89%** | Form submission, flash error handling, account selection, CDM optical tray sensor flow |
+| `routes/history_routes.py` | 63 | 13 | **79%** | Filtered transaction log, statement metrics, notification mark-as-read |
+| **Total Project Codebase** | **910** | **64** | **93%** | **77 Automated Test Cases** |
 
 ---
 
@@ -359,7 +360,7 @@ In accordance with RUET Department of Computer Science & Engineering academic po
 The ATM Transaction System successfully fulfills all Course Outcome 4 (CO4) requirements:
 - Complete **Requirements Engineering & Incremental Process Model**
 - **5 Design Patterns** across all 3 categories (Creational, Structural, Behavioral) with UML Class Diagram
-- **TDD Software Testing** with **75 tests, external mocks, Selenium UI tests, and 93% test coverage**
+- **TDD Software Testing** with **77 tests, external mocks, Selenium UI tests, and 93% test coverage**
 - Full **Configuration Management** with feature branches, PR reviews, and merge conflict resolution
 - Implementation of **New Tools (GitHub Actions CI/CD & Swagger/OpenAPI)**
 - **5+ Functional Modules** with persistent SQLite database and responsive dark-mode UI
