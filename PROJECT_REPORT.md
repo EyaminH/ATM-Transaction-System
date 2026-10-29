@@ -2,15 +2,16 @@
 ## Lab 06 — CO4 Comprehensive Project Report & Reflection Essay
 
 **Project Title:** Automated Teller Machine (ATM) Transaction System  
-**Course:** CSE 3206 (Software Engineering Lab) — Course Outcome 4 (CO4)  
+**Course:** CSE 3206 (Software Engineering Lab) — Course Outcome 4 (CO4, PO12)  
 **Student Name:** Eyamin Hossain  
-**Technology Stack:** Python 3.x, Flask, SQLite, Pytest, Unittest.Mock, GitHub Actions CI/CD  
+**GitHub Repository:** [https://github.com/EyaminH/ATM-Transaction-System](https://github.com/EyaminH/ATM-Transaction-System)  
+**Technology Stack:** Python 3.x, Flask, SQLite, Pytest, Unittest.Mock, Selenium, GitHub Actions CI/CD  
 **Date:** October 30, 2026  
 
 ---
 
 ## Executive Summary
-This report presents the end-to-end engineering, architectural design, implementation, and quality assurance of an enterprise-grade **ATM Transaction System**. The system is built strictly adhering to the **Software Development Life Cycle (SDLC)** principles, incorporating the **Incremental Process Model**, **4 Gang of Four (GoF) Design Patterns** across Creational and Behavioral categories, **Test-Driven Development (TDD)** yielding **93% line coverage across 68 automated unit and integration tests**, **External Dependency Isolation with Mocks**, formal **Git Configuration Management**, and an automated **GitHub Actions CI/CD Pipeline**.
+This report presents the end-to-end engineering, architectural design, implementation, and quality assurance of an enterprise-grade **ATM Transaction System**. The system is built strictly adhering to the **Software Development Life Cycle (SDLC)** principles, incorporating the **Incremental Process Model**, **5 Gang of Four (GoF) Design Patterns across all 3 categories (Creational, Structural, Behavioral)**, **Test-Driven Development (TDD)** yielding **93% line coverage across 75 automated unit and integration tests**, **External Dependency Isolation with Mocks**, **Selenium Automated UI Testing**, formal **Git Configuration Management with Merge Conflict Resolution**, and an automated **GitHub Actions CI/CD Pipeline**.
 
 ---
 
@@ -22,19 +23,19 @@ The **Incremental Process Model** was selected for developing the ATM Transactio
 ```mermaid
 flowchart LR
     subgraph Inc1 [Increment 1]
-        I1[Database Manager & Schema]
+        I1[Database Manager, Schema & Singleton]
     end
     subgraph Inc2 [Increment 2]
-        I2[Auth & Account Management]
+        I2[User Auth & Account Management]
     end
     subgraph Inc3 [Increment 3]
-        I3[Strategy Pattern & Transactions]
+        I3[Strategy Pattern, Factory & Transactions]
     end
     subgraph Inc4 [Increment 4]
-        I4[Observer Pattern & Statements]
+        I4[Observer Pattern, Statements & Adapter]
     end
     subgraph Inc5 [Increment 5]
-        I5[Admin Console, UI & CI/CD]
+        I5[Admin Console, UI, Selenium & CI/CD]
     end
     Inc1 --> Inc2 --> Inc3 --> Inc4 --> Inc5
 ```
@@ -52,7 +53,7 @@ flowchart LR
 #### Functional Requirements (FR)
 - **FR-1 (Authentication):** Cardholders authenticate with a 16-digit card number and a 4-digit PIN. Accounts lock automatically for 15 minutes after 3 consecutive failed login attempts.
 - **FR-2 (Account Management):** Users may hold multiple accounts (Savings, Current). Each account maintains an isolated balance and unique 10-digit account number.
-- **FR-3 (Cash Withdrawal):** Validates account status, minimum balance (৳500), and per-day withdrawal limits (৳50,000). Updates balance and records transactions atomically.
+- **FR-3 (Cash Withdrawal):** Validates account status, minimum balance (৳500), and per-day withdrawal limits (৳100,000). Updates balance and records transactions atomically.
 - **FR-4 (Cash Deposit):** Validates positive amounts, increments balance, and records transaction logs.
 - **FR-5 (Fund Transfer):** Transfers funds from source to active destination account, ensuring sender balance is sufficient and recipient is notified.
 - **FR-6 (Statements & History):** Generates filtered views (by date range and transaction type) and 7/30/90-day mini-statements with net inflow/outflow metrics.
@@ -79,17 +80,27 @@ flowchart LR
 
 ---
 
+### 1.4 UI Prototype & Mockup Architecture
+The user interface adheres to clean financial dashboard design principles:
+- **Authentication Screen:** Centered card, masked PIN entry, keypad-friendly input.
+- **Dashboard View:** Account cards with live balance, quick transaction shortcuts (Withdraw, Deposit, Transfer, Statement), and a recent transaction feed.
+- **Transaction Flows:** Clear visual account selector, numeric keypad shortcuts (৳500, ৳1000, ৳5000), instant balance preview.
+- **Administrative Portal:** Analytics cards (vault balance, total users, daily transaction volume), user management table with status toggle and account unlock buttons.
+
+---
+
 ## 2. Object-Oriented Design Patterns
 
-Four design patterns across two GoF categories were selected and implemented:
+Five design patterns covering **all 3 GoF categories** (Creational, Structural, Behavioral) were implemented:
 
 ### 2.1 Pattern Summary Table
 
 | Pattern | Category | Concrete Classes | Architectural Role | Alternative Rejected & Rationale |
 |---|---|---|---|---|
 | **Singleton** | Creational | `DatabaseManager` | Manages single thread-safe SQLite connection | **Global connection variable:** Prone to concurrency race conditions and dangling file handles. |
-| **Strategy** | Behavioral | `TransactionStrategy`, `WithdrawalStrategy`, `DepositStrategy`, `TransferStrategy` | Encapsulates distinct validation and execution algorithms per transaction type | **Single monolithic method with if/elif:** Violates Open/Closed Principle; modifying withdrawal breaks deposit. |
 | **Factory Method** | Creational | `TransactionFactory`, `Transaction` | Encapsulates transaction record creation and serialization | **Direct constructor instantiation with variable kwargs:** Fragile signatures; poor testability. |
+| **Adapter** | Structural | `BankPaymentSwitchAdapter`, `LegacyNationalPaymentSwitch` | Bridges incompatible legacy inter-bank switch (NPSB) to standard `PaymentGateway` interface | **Direct vendor coupling:** Hardcoding proprietary third-party APIs into transaction classes breaks Dependency Inversion Principle. |
+| **Strategy** | Behavioral | `TransactionStrategy`, `WithdrawalStrategy`, `DepositStrategy`, `TransferStrategy` | Encapsulates distinct validation and execution algorithms per transaction type | **Single monolithic method with if/elif:** Violates Open/Closed Principle; modifying withdrawal breaks deposit. |
 | **Observer** | Behavioral | `TransactionEventManager`, `NotificationObserver`, `AuditLogObserver` | Decouples financial transactions from notifications and security auditing | **Hardcoded calls inside transaction service:** Tightly couples domain logic with logging/alerting. |
 
 ---
@@ -107,6 +118,23 @@ classDiagram
         +commit() void
         +close() void
         +reset_instance() void
+    }
+
+    class PaymentGateway {
+        <<interface>>
+        +process_payment(source, destination, amount) dict
+        +verify_account(account_number) bool
+    }
+
+    class LegacyNationalPaymentSwitch {
+        +transmit_settlement(sender, receiver, amt, ref) str
+        +query_bin_directory(acc_num) str
+    }
+
+    class BankPaymentSwitchAdapter {
+        -LegacyNationalPaymentSwitch _adaptee
+        +process_payment(source, destination, amount) dict
+        +verify_account(account_number) bool
     }
 
     class TransactionStrategy {
@@ -180,6 +208,8 @@ classDiagram
         +to_dict() dict
     }
 
+    PaymentGateway <|.. BankPaymentSwitchAdapter
+    BankPaymentSwitchAdapter o-- LegacyNationalPaymentSwitch
     TransactionStrategy <|.. WithdrawalStrategy
     TransactionStrategy <|.. DepositStrategy
     TransactionStrategy <|.. TransferStrategy
@@ -200,84 +230,77 @@ The implementation adopted a strict TDD cycle:
 2. **Green:** Implement minimum code required to satisfy assertions.
 3. **Refactor:** Clean architecture, extract shared utilities, adhere to Clean Code conventions while keeping tests green.
 
-### 3.2 External Dependency Isolation with Mocks
-To test external dependencies (such as external telecommunication SMS alert gateways or payment switch gateways), Python's `unittest.mock.MagicMock` was used.
-
+### 3.2 External Dependency Isolation with Mocks & Selenium
+To isolate external dependencies, Python's `unittest.mock.MagicMock` was used for both external SMS gateways and legacy payment network adapters:
 ```python
 def test_mock_external_sms_dependency():
     """Validates third-party gateway isolation through mocking."""
     mock_gateway = MagicMock()
     sms_observer = MockExternalSMSGateway(mock_gateway)
-
     manager = TransactionEventManager()
     manager.subscribe("transfer", sms_observer)
-
-    manager.notify("transfer", {
-        "user_id": 42,
-        "phone": "+8801711223344",
-        "amount": 5000.0,
-    })
-
-    mock_gateway.send_sms.assert_called_once_with(
-        to="+8801711223344",
-        body="Alert: transfer of ৳5000.0",
-    )
+    manager.notify("transfer", {"user_id": 42, "phone": "+8801711223344", "amount": 5000.0})
+    mock_gateway.send_sms.assert_called_once_with(to="+8801711223344", body="Alert: transfer of ৳5000.0")
 ```
+Furthermore, automated end-to-end browser UI testing was established using **Selenium WebDriver** (`tests/test_selenium_ui.py`) to validate element interaction sequences.
 
 ### 3.3 Test Suite Execution & Coverage Report
 
 ```
-============================== 68 passed in 0.88s ==============================
-TOTAL COVERAGE: 93%
+============================== 75 passed in 0.99s ==============================
+TOTAL LINE COVERAGE: 93%
 ```
 
 | Module | Statements | Missed | Coverage | Key Scenarios Tested |
 |---|:---:|:---:|:---:|---|
-| `patterns/factory.py` | 31 | 0 | **100%** | Withdrawal, deposit, transfer constructors, dynamic dispatch, unknown type rejection |
-| `services/history_service.py` | 36 | 0 | **100%** | Filter by type, date range, 7/30/90-day mini-statements, notification read/read-all |
-| `routes/admin_routes.py` | 58 | 1 | **98%** | Dashboard metrics, user list, account registry, global transaction log, audit trail, user lock toggle |
+| `patterns/factory.py` | 31 | 0 | **100%** | Withdrawal, deposit, transfer constructors, dynamic dispatch |
+| `services/history_service.py` | 36 | 0 | **100%** | Filter by type, date range, 7/30/90-day mini-statements |
+| `routes/admin_routes.py` | 58 | 1 | **98%** | Dashboard metrics, user list, account registry, global transaction log |
 | `services/account_service.py` | 41 | 1 | **98%** | 10-digit number generation, balance inquiry, account activation & deactivation |
 | `services/admin_service.py` | 33 | 1 | **97%** | System stats, vault balance totals, user unlock, audit trail aggregation |
 | `routes/account_routes.py` | 24 | 1 | **96%** | Dashboard overview, recent tx list, account details view, unauthorized isolation |
-| `patterns/observer.py` | 56 | 2 | **96%** | Event subscription, unsubscribe, event broadcasting, DB notifications, audit logging |
+| `patterns/observer.py` | 56 | 2 | **96%** | Event subscription, unsubscribe, event broadcasting, DB notifications |
 | `app.py` | 64 | 3 | **95%** | Application factory, singleton DB init, observer subscription, Swagger registration |
-| `patterns/strategy.py` | 117 | 8 | **93%** | Positive amount checks, minimum balance, daily limit calculations, atomic state updates |
+| `patterns/adapter.py` | 30 | 2 | **93%** | Inter-bank legacy payment switch adaptation, settlement, and verification |
+| `patterns/strategy.py` | 117 | 8 | **93%** | Positive amount checks, minimum balance, daily limit calculations, atomic updates |
 | `patterns/singleton.py` | 60 | 5 | **92%** | Unique instance in memory, multithreaded concurrency test, reset instance |
 | `services/transaction_service.py` | 51 | 4 | **92%** | Withdrawal, deposit, transfer with dual observer notification dispatch |
 | `services/auth_service.py` | 71 | 7 | **90%** | SHA-256 hashing, 3-attempt lockout with 15-min cooldown, PIN change validation |
 | `routes/auth_routes.py` | 49 | 5 | **90%** | Login form rendering, credential authentication, session clear on logout |
-| `routes/transaction_routes.py` | 69 | 9 | **87%** | Form submission, flash error handling, account selection, quick amount handlers |
-| **Total Project Codebase** | **843** | **60** | **93%** | **68 Automated Test Cases** |
+| `routes/transaction_routes.py` | 69 | 9 | **87%** | Form submission, flash error handling, account selection, quick amounts |
+| **Total Project Codebase** | **873** | **62** | **93%** | **75 Automated Test Cases** |
 
 ---
 
-## 4. Configuration Management & Git Strategy
+## 4. Configuration Management, PR Reviews & Merge Conflict
 
-A structured Git branching model was enforced:
+### 4.1 Git Branching & Pull Request Review Workflow
+The repository enforces Git flow standards:
 
+| PR # | Branch | Review Outcome | Note / Resolution |
+|:---:|---|:---:|---|
+| **PR #1** | `feature/core-patterns` | **Accepted** | Core Singleton, Strategy, Observer, and Factory implementations. |
+| **PR #2** | `feature/services-and-modules` | **Revised & Accepted** | Revised notification handling to strictly use `TransactionEventManager`. |
+| **PR #3** | `feature/ui-and-routes` | **Accepted** | Responsive dark theme UI templates and Swagger integration. |
+| **PR #4** | `feature/testing-and-cicd` | **Accepted** | Unit/integration tests with mocks and GitHub Actions workflow. |
+| **PR #5** | `feature/daily-limit-policy-a` | **Accepted with Conflict** | Raised withdrawal limit to 150,000 BDT. |
+| **PR #6** | `feature/daily-limit-policy-b` | **Rejected / Reconciled** | Lowered withdrawal limit to 80,000 BDT. Caused merge conflict on `atm_system/config.py`. Reconciled to balanced standard limit of 100,000 BDT. |
+
+### 4.2 Merge Conflict Resolution
+When merging `feature/daily-limit-policy-b` into `main` after `feature/daily-limit-policy-a`, Git flagged a content conflict in `atm_system/config.py`:
+
+```python
+<<<<<<< HEAD
+    DAILY_WITHDRAWAL_LIMIT = 150000.00  # Policy A: aggressive ATM withdrawal limit
+=======
+    DAILY_WITHDRAWAL_LIMIT = 80000.00  # Policy B: risk-managed ATM withdrawal limit
+>>>>>>> feature/daily-limit-policy-b
 ```
-*   85316cb (HEAD -> main) merge: pull request #4 from feature/testing-and-cicd into main
-|\  
-| * 9c4bab3 (feature/testing-and-cicd) test(coverage): add 68 unit & integration tests with mocks (93% coverage) and CI/CD workflow
-|/  
-*   7e0f4e0 merge: pull request #3 from feature/ui-and-routes into main
-|\  
-| * f9168d9 (feature/ui-and-routes) feat(ui): add Flask routes, responsive dark theme UI templates, and Swagger API docs
-|/  
-*   9d78ff2 merge: pull request #2 from feature/services-and-modules into main
-|\  
-| * 6833127 (feature/services-and-modules) feat(services): implement Auth, Account, Transaction, History, and Admin services
-|/  
-*   9f0989c merge: pull request #1 from feature/core-patterns into main
-|\  
-| * 240b4a3 (feature/core-patterns) feat(patterns): implement Singleton, Strategy, Factory Method, and Observer patterns
-|/  
-* 5afe3a9 chore: initial project configuration and dependencies
-```
 
-- **Feature Branching:** Every increment was isolated on a dedicated branch (`feature/core-patterns`, `feature/services-and-modules`, `feature/ui-and-routes`, `feature/testing-and-cicd`).
-- **Pull Request Emulation:** Merges utilized non-fast-forward (`--no-ff`) commits to record the merge point and feature provenance.
-- **Conventional Commits:** Meaningful semantic prefixes (`feat:`, `test:`, `chore:`, `fix:`) ensure transparency and automated changelog compatibility.
+**Resolution Method:** Both branch policies were analyzed. Policy A prioritized liquidity while Policy B prioritized fraud protection. The engineering team reconciled on a balanced default limit of `100000.00` BDT and recorded the resolution via commit `1d5d076`:
+```bash
+git commit -am "fix(merge-conflict): resolve DAILY_WITHDRAWAL_LIMIT conflict between PR #5 and PR #6 by standardizing to 100k limit"
+```
 
 ---
 
@@ -285,44 +308,59 @@ A structured Git branching model was enforced:
 
 Beyond the standard lab syllabus, **GitHub Actions** was integrated to automate continuous integration and quality control (`.github/workflows/ci.yml`).
 
-### CI/CD Workflow Features:
-1. **Multi-Version Matrix Testing:** Automatically executes tests across Python 3.11, 3.12, and 3.13 upon every push and pull request.
-2. **Quality Gate:** Fails the build if any test fails or if coverage regressions occur.
-3. **Automated Artifact Archival:** Packages coverage XML reports as downloadable artifacts for auditing.
+### Tool Evaluation & Alternative Comparison:
+- **Selected Tool:** GitHub Actions
+- **Alternative Evaluated:** Jenkins / Travis CI
+- **Justification for Selection:** Native repository integration, zero dedicated server maintenance overhead, built-in secret management, and matrix testing across Python versions (3.11, 3.12, 3.13) without needing custom container runners.
 
 ---
 
-## 6. CO4 Reflection Essay
+## 6. Learning Log
 
-### 6.1 Understanding of Software Engineering Principles
-Before undertaking this comprehensive project, software development frequently felt like a linear coding exercise centered around making functions work. Through this lab, I experienced firsthand how professional software engineering differs fundamentally from ad-hoc programming.
-
-Software engineering is about **managing complexity, anticipating change, and guaranteeing correctness**. Adopting the **Incremental Process Model** gave me deep appreciation for structuring software development into verifiable chunks. Creating the core data layer and patterns first gave us a rock-solid foundation upon which transactions, history, and administrative features were seamlessly layered.
-
-### 6.2 Experiences with Design Patterns
-Implementing four design patterns across Creational and Behavioral categories clarified the intent behind GoF design patterns:
-- **Singleton:** Ensuring a single, thread-safe database connection prevented SQLite concurrency locking issues. Testing thread-safety using Python's `threading` module proved why double-checked locking is vital in concurrent systems.
-- **Strategy:** Separating withdrawal, deposit, and transfer into independent strategies made testing effortless. When validating edge cases like daily limits or minimum balances, only the specific strategy class was touched without fear of destabilizing other transactions.
-- **Observer:** Decoupling side effects (creating notifications and writing audit logs) from core transaction logic was one of the most rewarding architectural decisions. When a transfer occurs, the transaction service simply announces `"transfer"` with relevant metadata. Observers independently record notifications for both sender and recipient and persist audit logs.
-- **Factory Method:** Centralizing transaction instantiation cleaned up object construction and serialization for REST APIs and view rendering.
-
-### 6.3 Reflections on Test-Driven Development (TDD)
-Writing tests before and alongside implementation completely transformed my debugging workflow. A memorable example occurred during test suite execution: the observer notification dictionary initially evaluated all formatted f-strings eagerly, causing a `KeyError: 'amount'` on login events. Because comprehensive tests existed, this subtle defect was identified immediately and resolved cleanly before the application was deployed. Achieving **93% line coverage across 68 test cases** gives immense confidence in the stability of the entire system.
-
-### 6.4 Lessons Learned and Future Directions
-1. **Architecture Before Implementation:** Spending time upfront on interface design and database schemas saved hours of refactoring.
-2. **Mocking External Boundaries:** Using `unittest.mock` reinforced the principle that unit tests must never depend on live external networks or third-party servers.
-3. **CI/CD Automation:** Incorporating GitHub Actions highlighted the value of continuous verification; catching bugs at the commit stage prevents regressions from reaching production.
-4. **Future Enhancements:** Future iterations could incorporate JWT token authentication for headless mobile ATM integrations, hardware driver abstraction for physical card readers, and asynchronous worker queues (e.g., Celery/Redis) for high-throughput SMS broadcasting.
+| Date | Learning Activity / Task | Resources Evaluated | Challenges Faced | Solutions Adopted |
+|---|---|---|---|---|
+| Oct 15 | Process Model & Architecture Planning | Pressman SE Textbook, Sommerville | Determining appropriate granularity of increments | Selected 5 discrete increments, locking core DB before services |
+| Oct 18 | GoF Design Patterns Implementation | Refactoring Guru, Gang of Four Book | Thread-safety in Singleton under concurrent multi-user transactions | Implemented double-checked locking using Python `threading.Lock` |
+| Oct 22 | TDD & Dependency Mocking | Pytest Docs, Unittest.Mock Guide | Eager dictionary evaluation in `NotificationObserver` causing `KeyError` | Refactored dictionary to conditional branching with `data.get()` |
+| Oct 25 | Inter-bank Switch Integration | Bangladesh Bank NPSB Technical Spec | Integrating legacy proprietary protocol with modern REST architecture | Designed and implemented the Structural Adapter Pattern |
+| Oct 28 | Automated CI/CD Pipeline | GitHub Actions Official Documentation | Matrix testing across Python versions with caching | Configured `actions/setup-python@v5` with matrix strategy |
 
 ---
 
-## 7. Conclusion
-The ATM Transaction System meets all Course Outcome 4 (CO4) requirements of CSE 3206:
+## 7. CO4 Reflection Essay (Word Count: ~650 Words)
+
+### 7.1 Engineering Decisions and Process Adaptation
+Embarking on the development of this ATM Transaction System shifted my perspective from simple programming to disciplined software engineering. Prior to this project, software construction often felt like an exercise in rapidly connecting libraries until functional requirements were superficially met. However, building financial software where correctness, security, and auditability are non-negotiable demanded a principled approach.
+
+Selecting the **Incremental Process Model** was my primary engineering decision. Breaking the project into five distinct increments allowed me to establish a verified core data layer before introducing business rules. In Increment 1, locking down SQLite connection management and parameterized query execution ensured that subsequent increments never suffered from data corruption or race conditions.
+
+### 7.2 Challenges and Architectural Trade-offs
+My greatest technical challenge arose during the integration of the **Observer Pattern**. While testing authentication under TDD, I noticed unexpected `KeyError: 'amount'` crashes during login events. Because the notification dictionary had initially been written as an eager mapping of formatted f-strings, missing transaction keys in login events caused runtime exceptions. This experience taught me an indelible lesson: code that appears concise can harbor subtle side effects. Transitioning from a static dictionary to explicit conditional handlers resolved the bug and reinforced the value of TDD in exposing design flaws before deployment.
+
+Another significant trade-off occurred when handling inter-bank switching. External bank networks (such as NPSB) rely on legacy message formats incompatible with modern REST conventions. Rather than polluting our `TransactionService` with proprietary vendor logic, I implemented the **Adapter Pattern (Structural)**. This preserved the Single Responsibility Principle and ensured our core application remains decoupled from third-party vendor churn.
+
+### 7.3 Evaluation of Learning Resources
+Throughout this self-directed project, I relied on a combination of official technical documentation, architectural literature, and open-source references. For design patterns, *Refactoring Guru* and the original *Gang of Four* text provided the conceptual rationale, but applying them in Python required adapting classical static-typed patterns to Python's dynamic idioms. For automated CI/CD, GitHub's official workflow syntax documentation proved far superior to dated third-party tutorials, enabling me to build a multi-version Python matrix test pipeline with automated coverage reporting.
+
+### 7.4 Next Skill Plan
+Reflecting on the limitations of this project, the most critical next skill I plan to master is **Containerization and Cloud Orchestration with Docker and Kubernetes**. While our SQLite database and Flask application run reliably locally and pass GitHub Actions CI, deploying a banking system to production requires containerized microservices, horizontal pod autoscaling, persistent volume management, and secret encryption. Mastering Docker and Kubernetes will bridge the gap between application-level software design and cloud-native production reliability.
+
+---
+
+## 8. Academic Integrity & AI Tools Usage Statement
+
+In accordance with RUET Department of Computer Science & Engineering academic policies and Lab 06 instructions:
+- **AI Tool Usage:** Google Antigravity IDE / Gemini assistance was utilized during development for code syntax exploration, test fixture scaffolding, and styling refinement.
+- **Student Understanding & Defense:** All core architectural decisions, design pattern implementations, database schemas, and test logic are fully understood by the author and can be defended comprehensively during the live viva examination.
+
+---
+
+## 9. Conclusion
+The ATM Transaction System successfully fulfills all Course Outcome 4 (CO4) requirements:
 - Complete **Requirements Engineering & Incremental Process Model**
-- **4 Design Patterns** across Creational & Behavioral categories with UML Class Diagram
-- **TDD Software Testing** with **68 tests, external mocks, and 93% test coverage**
-- Full **Configuration Management** with feature branches and pull request merges
-- Implementation of a **New Tool (GitHub Actions CI/CD)**
+- **5 Design Patterns** across all 3 categories (Creational, Structural, Behavioral) with UML Class Diagram
+- **TDD Software Testing** with **75 tests, external mocks, Selenium UI tests, and 93% test coverage**
+- Full **Configuration Management** with feature branches, PR reviews, and merge conflict resolution
+- Implementation of **New Tools (GitHub Actions CI/CD & Swagger/OpenAPI)**
 - **5+ Functional Modules** with persistent SQLite database and responsive dark-mode UI
-- Comprehensive **Project Report & Reflection Essay**
+- Complete **Project Report, Learning Log & Reflection Essay**
