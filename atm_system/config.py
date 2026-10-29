@@ -18,7 +18,7 @@ class Config:
     MIN_WITHDRAWAL_AMOUNT = 100.00
     MIN_DEPOSIT_AMOUNT = 100.00
     MIN_BALANCE = 500.00  # Minimum balance to maintain
-    DAILY_WITHDRAWAL_LIMIT = 100000.00
+    DAILY_WITHDRAWAL_LIMIT = 80000.00  # Policy B: risk-managed ATM withdrawal limit
     TRANSACTION_TYPES = ["withdrawal", "deposit", "transfer"]
 
 
