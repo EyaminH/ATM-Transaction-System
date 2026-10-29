@@ -90,6 +90,30 @@ class TestTransactionRoutes:
         updated = account_service.get_account_by_id(acc_id)
         assert updated["balance"] == initial_balance + 2000.0
 
+    def test_deposit_hardware_sensor_flow(self, client, app):
+        client.post("/login", data={"card_number": "5555666677778888", "pin": "5678"})
+        # 1. GET deposit page generates a random sensor reading
+        res_get = client.get("/deposit")
+        assert res_get.status_code == 200
+        assert b"ATM Sensor Counted Cash" in res_get.data
+        assert b"Hardware Locked" in res_get.data
+
+        with client.session_transaction() as sess:
+            sensor = sess.get("cdm_sensor_data")
+            assert sensor is not None
+            assert sensor["total_amount"] > 0
+            counted = sensor["total_amount"]
+
+        # 2. POST with matching amount succeeds
+        account_service = app.config["ACCOUNT_SERVICE"]
+        acc = account_service.get_accounts_by_user(2)[0]
+        res_post = client.post("/deposit", data={
+            "account_id": acc["id"],
+            "amount": str(counted),
+        }, follow_redirects=True)
+        assert res_post.status_code == 200
+        assert b"deposited successfully" in res_post.data
+
     def test_transfer_endpoint(self, client, app):
         client.post("/login", data={"card_number": "5555666677778888", "pin": "5678"})
         account_service = app.config["ACCOUNT_SERVICE"]
