@@ -1,0 +1,155 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "ATM Transaction System REST API",
+    "description": "Comprehensive banking and automated teller machine API documentation for CSE 3206 (CO4).",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:5000",
+      "description": "Local Development Server"
+    }
+  ],
+  "paths": {
+    "/login": {
+      "post": {
+        "summary": "Authenticate User / Card",
+        "description": "Authenticates cardholder with 16-digit card number and 4-digit PIN. Locks account after 3 failed attempts.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "card_number": { "type": "string", "example": "5555666677778888" },
+                  "pin": { "type": "string", "example": "5678" }
+                },
+                "required": ["card_number", "pin"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "302": { "description": "Redirects to dashboard upon successful login" },
+          "200": { "description": "Re-renders login with error message" }
+        }
+      }
+    },
+    "/logout": {
+      "get": {
+        "summary": "Logout",
+        "description": "Terminates the user session.",
+        "responses": {
+          "302": { "description": "Redirects to login page" }
+        }
+      }
+    },
+    "/withdraw": {
+      "post": {
+        "summary": "Cash Withdrawal",
+        "description": "Processes cash withdrawal using Strategy pattern, validating minimum balance and daily limits.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "account_id": { "type": "integer", "example": 1 },
+                  "amount": { "type": "number", "example": 1000.0 }
+                },
+                "required": ["account_id", "amount"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "302": { "description": "Withdrawal executed successfully" }
+        }
+      }
+    },
+    "/deposit": {
+      "post": {
+        "summary": "Cash Deposit",
+        "description": "Deposits cash into the specified account.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "account_id": { "type": "integer", "example": 1 },
+                  "amount": { "type": "number", "example": 5000.0 }
+                },
+                "required": ["account_id", "amount"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "302": { "description": "Deposit completed successfully" }
+        }
+      }
+    },
+    "/transfer": {
+      "post": {
+        "summary": "Fund Transfer",
+        "description": "Transfers funds between accounts and notifies both sender and recipient via Observer pattern.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "account_id": { "type": "integer", "example": 1 },
+                  "target_account": { "type": "string", "example": "ACC-1002" },
+                  "amount": { "type": "number", "example": 1500.0 }
+                },
+                "required": ["account_id", "target_account", "amount"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "302": { "description": "Transfer completed" }
+        }
+      }
+    },
+    "/statement/{account_id}": {
+      "get": {
+        "summary": "Account Mini-Statement",
+        "description": "Retrieves transactions and inflows/outflows for specified period (e.g. 7, 30, 90 days).",
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "schema": { "type": "integer", "default": 30 }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Statement rendered" }
+        }
+      }
+    },
+    "/admin/": {
+      "get": {
+        "summary": "Admin Dashboard",
+        "description": "System monitoring metrics, vault balances, and transaction volume (Admin only).",
+        "responses": {
+          "200": { "description": "Admin metrics dashboard" },
+          "302": { "description": "Redirect if unauthenticated or non-admin" }
+        }
+      }
+    }
+  }
+}

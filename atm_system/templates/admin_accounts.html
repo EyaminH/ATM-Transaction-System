@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Manage Accounts — Admin{% endblock %}
+
+{% block content %}
+<div class="page-header fade-up">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+        <div>
+            <h1>🏦 Account Registry</h1>
+            <p>System-wide bank accounts, balances, and operational status</p>
+        </div>
+        <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-secondary btn-sm">
+            ← Admin Dashboard
+        </a>
+    </div>
+</div>
+
+<div class="card fade-up-1">
+    {% if accounts %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Account No.</th>
+                    <th>Account Holder</th>
+                    <th>Linked Card</th>
+                    <th>Type</th>
+                    <th>Current Balance</th>
+                    <th>Status</th>
+                    <th>Opened On</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for acc in accounts %}
+                <tr>
+                    <td class="mono"><strong>{{ acc.account_number }}</strong></td>
+                    <td>{{ acc.full_name }}</td>
+                    <td class="mono">{{ acc.card_number }}</td>
+                    <td><span class="status-badge status-pending">{{ acc.account_type | title }}</span></td>
+                    <td class="mono"><strong>৳{{ "%.2f"|format(acc.balance) }}</strong></td>
+                    <td>
+                        <span class="status-badge {{ 'status-active' if acc.is_active else 'status-inactive' }}">
+                            {{ 'Active' if acc.is_active else 'Inactive' }}
+                        </span>
+                    </td>
+                    <td style="white-space:nowrap;font-size:0.85rem;color:var(--text-secondary);">
+                        {{ acc.created_at }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">🏦</div>
+        <p>No accounts registered in the database.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

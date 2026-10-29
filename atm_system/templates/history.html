@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Transaction History — ATM System{% endblock %}
+
+{% block content %}
+<div class="page-header fade-up">
+    <h1>📋 Transaction History</h1>
+    <p>View and filter past transactions for your accounts</p>
+</div>
+
+<!-- Account Selection & Filters -->
+<div class="card fade-up-1" style="margin-bottom:1.5rem;">
+    <form method="GET" action="{{ url_for('history.transaction_history', account_id=current_account_id) }}" class="filter-bar">
+        <div class="form-group">
+            <label for="acc-select">Select Account</label>
+            <select id="acc-select" class="form-control" onchange="window.location.href='/history/' + this.value;">
+                {% for acc in accounts %}
+                <option value="{{ acc.id }}" {% if acc.id == current_account_id %}selected{% endif %}>
+                    {{ acc.account_type | title }} — {{ acc.account_number }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="type">Type</label>
+            <select name="type" id="type" class="form-control">
+                <option value="">All Types</option>
+                <option value="withdrawal" {% if tx_type == 'withdrawal' %}selected{% endif %}>Withdrawal</option>
+                <option value="deposit" {% if tx_type == 'deposit' %}selected{% endif %}>Deposit</option>
+                <option value="transfer" {% if tx_type == 'transfer' %}selected{% endif %}>Transfer Out</option>
+                <option value="transfer_in" {% if tx_type == 'transfer_in' %}selected{% endif %}>Transfer In</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="start_date">Start Date</label>
+            <input type="date" name="start_date" id="start_date" class="form-control" value="{{ start_date }}">
+        </div>
+
+        <div class="form-group">
+            <label for="end_date">End Date</label>
+            <input type="date" name="end_date" id="end_date" class="form-control" value="{{ end_date }}">
+        </div>
+
+        <div class="form-group" style="display:flex;gap:0.5rem;align-items:flex-end;">
+            <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+            <a href="{{ url_for('history.transaction_history', account_id=current_account_id) }}" class="btn btn-secondary btn-sm">Reset</a>
+            <a href="{{ url_for('history.statement', account_id=current_account_id) }}" class="btn btn-secondary btn-sm">Statement</a>
+        </div>
+    </form>
+</div>
+
+<!-- Transactions Table -->
+<div class="card fade-up-2">
+    {% if transactions %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Ref ID</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Balance After</th>
+                    <th>Description</th>
+                    <th>Date & Time</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tx in transactions %}
+                <tr>
+                    <td class="mono" style="font-size:0.8rem;color:var(--text-muted);">#{{ tx.id }}</td>
+                    <td>
+                        {% if tx.transaction_type == 'withdrawal' %}💸
+                        {% elif tx.transaction_type == 'deposit' %}💰
+                        {% elif tx.transaction_type == 'transfer' %}🔄
+                        {% elif tx.transaction_type == 'transfer_in' %}📥
+                        {% endif %}
+                        {{ tx.transaction_type | replace('_', ' ') | title }}
+                    </td>
+                    <td class="{{ 'amount-positive' if tx.transaction_type in ['deposit', 'transfer_in'] else 'amount-negative' }}">
+                        {{ '+' if tx.transaction_type in ['deposit', 'transfer_in'] else '-' }}৳{{ "%.2f"|format(tx.amount) }}
+                    </td>
+                    <td class="mono">৳{{ "%.2f"|format(tx.balance_after) }}</td>
+                    <td>{{ tx.description }}</td>
+                    <td style="white-space:nowrap;">{{ tx.created_at }}</td>
+                    <td><span class="status-badge status-{{ tx.status }}">{{ tx.status }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <p>No transactions match your search criteria.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

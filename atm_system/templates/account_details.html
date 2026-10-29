@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Account Details — ATM System{% endblock %}
+
+{% block content %}
+<div class="page-header fade-up">
+    <h1>💳 Account Details</h1>
+    <p>View detailed information for your account</p>
+</div>
+
+<div class="card fade-up-1" style="max-width:600px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid var(--border);">
+        <div>
+            <span class="status-badge status-{{ account.status }}">{{ account.status | title }}</span>
+            <h2 style="margin-top:0.5rem;font-size:1.4rem;">{{ account.account_type | title }} Account</h2>
+        </div>
+        <div style="text-align:right;">
+            <div style="font-size:0.8rem;color:var(--text-secondary);">Balance</div>
+            <div class="mono" style="font-size:1.5rem;font-weight:700;color:var(--text-primary);">৳{{ "%.2f"|format(account.balance) }}</div>
+        </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.5rem;">
+        <div>
+            <div style="font-size:0.8rem;color:var(--text-secondary);">Account Number</div>
+            <div class="mono" style="font-size:1.1rem;font-weight:600;margin-top:0.25rem;">{{ account.account_number }}</div>
+        </div>
+        <div>
+            <div style="font-size:0.8rem;color:var(--text-secondary);">Account Type</div>
+            <div style="font-size:1.1rem;font-weight:600;margin-top:0.25rem;">{{ account.account_type | title }}</div>
+        </div>
+        <div>
+            <div style="font-size:0.8rem;color:var(--text-secondary);">Created On</div>
+            <div style="font-size:0.95rem;margin-top:0.25rem;">{{ account.created_at }}</div>
+        </div>
+        <div>
+            <div style="font-size:0.8rem;color:var(--text-secondary);">Status</div>
+            <div style="font-size:0.95rem;margin-top:0.25rem;">{{ account.status | title }}</div>
+        </div>
+    </div>
+
+    <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+        <a href="{{ url_for('history.statement', account_id=account.id) }}" class="btn btn-primary btn-sm">
+            📄 Generate Statement
+        </a>
+        <a href="{{ url_for('history.transaction_history', account_id=account.id) }}" class="btn btn-secondary btn-sm">
+            📋 View History
+        </a>
+        <a href="{{ url_for('account.dashboard') }}" class="btn btn-secondary btn-sm">
+            ← Back to Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

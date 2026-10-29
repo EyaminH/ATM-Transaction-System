@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Change PIN — ATM System{% endblock %}
+
+{% block content %}
+<div class="page-header fade-up">
+    <h1>🔐 Change ATM PIN</h1>
+    <p>Update your 4-digit security PIN</p>
+</div>
+
+<div class="card fade-up-1" style="max-width:520px;">
+    <form method="POST" action="{{ url_for('auth.change_pin') }}" id="change-pin-form">
+        <div class="form-group">
+            <label for="old_pin">Current PIN</label>
+            <input type="password" name="old_pin" id="old_pin" class="form-control"
+                   placeholder="Enter current 4-digit PIN" maxlength="4" pattern="[0-9]{4}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="new_pin">New PIN</label>
+            <input type="password" name="new_pin" id="new_pin" class="form-control"
+                   placeholder="Enter new 4-digit PIN" maxlength="4" pattern="[0-9]{4}" required>
+            <small style="color:var(--text-muted);margin-top:0.35rem;display:block;">
+                Must be exactly 4 numeric digits.
+            </small>
+        </div>
+
+        <div class="form-group">
+            <label for="confirm_pin">Confirm New PIN</label>
+            <input type="password" name="confirm_pin" id="confirm_pin" class="form-control"
+                   placeholder="Re-enter new 4-digit PIN" maxlength="4" pattern="[0-9]{4}" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" id="btn-submit-pin">
+            Update PIN
+        </button>
+    </form>
+</div>
+{% endblock %}
