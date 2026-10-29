@@ -4,12 +4,12 @@
 {% block content %}
 <div class="page-header fade-up">
     <h1>💰 Cash Deposit Machine (CDM)</h1>
-    <p>Insert banknotes into the cash slot and verify denomination counting</p>
+    <p>Deposit currency notes with automated optical bill validation</p>
 </div>
 
 <div class="card fade-up-1" style="max-width:620px;">
     <form method="POST" action="{{ url_for('transaction.deposit') }}" class="transaction-form" id="deposit-form">
-        <!-- 1. Select Account -->
+        <!-- 1. Destination Account -->
         <div class="form-group">
             <label for="account_id">Destination Account</label>
             <select name="account_id" id="account_id" class="form-control" required>
@@ -27,59 +27,72 @@
             <div class="amount-display" style="padding:1.25rem;margin-bottom:0.75rem;">
                 <div class="currency">৳</div>
                 <input type="number" name="amount" id="amount" placeholder="0.00"
-                       min="100" step="100" required oninput="checkMismatch()">
+                       min="100" step="100" required oninput="onDeclaredAmountChange()">
             </div>
             <div class="action-grid" style="margin-bottom:1.5rem;grid-template-columns:repeat(4, 1fr);">
-                <div class="action-card" onclick="setPreset(1000)" style="cursor:pointer;padding:0.75rem;">৳1,000</div>
-                <div class="action-card" onclick="setPreset(2000)" style="cursor:pointer;padding:0.75rem;">৳2,000</div>
-                <div class="action-card" onclick="setPreset(5000)" style="cursor:pointer;padding:0.75rem;">৳5,000</div>
-                <div class="action-card" onclick="setPreset(10000)" style="cursor:pointer;padding:0.75rem;">৳10,000</div>
+                <div class="action-card" onclick="setDeclaredPreset(1000)" style="cursor:pointer;padding:0.75rem;">৳1,000</div>
+                <div class="action-card" onclick="setDeclaredPreset(2000)" style="cursor:pointer;padding:0.75rem;">৳2,000</div>
+                <div class="action-card" onclick="setDeclaredPreset(5000)" style="cursor:pointer;padding:0.75rem;">৳5,000</div>
+                <div class="action-card" onclick="setDeclaredPreset(10000)" style="cursor:pointer;padding:0.75rem;">৳10,000</div>
             </div>
         </div>
 
-        <!-- 3. Physical CDM Cash Slot Sensor & Bill Counter -->
+        <!-- 3. Hardware Optical Banknote Sensor (READ-ONLY) -->
         <div style="background:var(--bg-glass-hover);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;margin-bottom:1.5rem;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
                 <h3 style="font-size:1rem;font-weight:600;display:flex;align-items:center;gap:0.5rem;">
-                    <span>📥</span> Cash Deposit Slot Sensor (Banknote Counter)
+                    <span>📥</span> Hardware Cash Slot Sensor (Automated Bill Counter)
                 </h3>
-                <button type="button" onclick="autoMatchTray()" class="btn btn-secondary btn-sm" style="font-size:0.75rem;padding:0.25rem 0.6rem;">
-                    ⚡ Auto-Match Tray
-                </button>
+                <span class="status-badge status-active" style="font-size:0.7rem;">Hardware Locked</span>
             </div>
             
             <p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:1rem;">
-                Physical banknotes placed into the deposit slot are scanned by optical bill sensors.
+                Optical sensors count physical banknotes placed into the deposit slot. <em>(Hardware-controlled readout — direct manual editing disabled)</em>.
             </p>
 
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
-                <div>
-                    <label style="font-size:0.75rem;color:var(--text-secondary);">৳1,000 Notes</label>
-                    <input type="number" id="notes-1000" class="form-control" value="0" min="0" oninput="calculateCountedCash()">
+            <!-- Read-only Banknote Sensor Readouts -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1rem;">
+                <div style="background:var(--bg-card);padding:0.6rem 0.8rem;border-radius:var(--radius-md);border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:0.8rem;color:var(--text-secondary);">৳1,000 Notes:</span>
+                    <span class="mono" id="disp-1000" style="font-weight:700;color:var(--text-primary);">0 notes</span>
                 </div>
-                <div>
-                    <label style="font-size:0.75rem;color:var(--text-secondary);">৳500 Notes</label>
-                    <input type="number" id="notes-500" class="form-control" value="0" min="0" oninput="calculateCountedCash()">
+                <div style="background:var(--bg-card);padding:0.6rem 0.8rem;border-radius:var(--radius-md);border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:0.8rem;color:var(--text-secondary);">৳500 Notes:</span>
+                    <span class="mono" id="disp-500" style="font-weight:700;color:var(--text-primary);">0 notes</span>
                 </div>
-                <div>
-                    <label style="font-size:0.75rem;color:var(--text-secondary);">৳200 Notes</label>
-                    <input type="number" id="notes-200" class="form-control" value="0" min="0" oninput="calculateCountedCash()">
+                <div style="background:var(--bg-card);padding:0.6rem 0.8rem;border-radius:var(--radius-md);border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:0.8rem;color:var(--text-secondary);">৳200 Notes:</span>
+                    <span class="mono" id="disp-200" style="font-weight:700;color:var(--text-primary);">0 notes</span>
                 </div>
-                <div>
-                    <label style="font-size:0.75rem;color:var(--text-secondary);">৳100 Notes</label>
-                    <input type="number" id="notes-100" class="form-control" value="0" min="0" oninput="calculateCountedCash()">
+                <div style="background:var(--bg-card);padding:0.6rem 0.8rem;border-radius:var(--radius-md);border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:0.8rem;color:var(--text-secondary);">৳100 Notes:</span>
+                    <span class="mono" id="disp-100" style="font-weight:700;color:var(--text-primary);">0 notes</span>
                 </div>
+            </div>
+
+            <!-- Sensor Simulation Actions (Real ATM Hardware Test) -->
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem;">
+                <button type="button" onclick="sensorScanAndMatch()" class="btn btn-secondary btn-sm" style="font-size:0.75rem;padding:0.35rem 0.75rem;">
+                    🟢 Normal Scan (All Notes Valid)
+                </button>
+                <button type="button" onclick="sensorSimulateRejection()" class="btn btn-danger btn-sm" style="font-size:0.75rem;padding:0.35rem 0.75rem;">
+                    ⚠️ Simulate 1 Torn Note Rejected
+                </button>
+                <button type="button" onclick="sensorClearTray()" class="btn btn-secondary btn-sm" style="font-size:0.75rem;padding:0.35rem 0.75rem;">
+                    ❌ Empty Slot
+                </button>
             </div>
 
             <input type="hidden" name="counted_cash" id="counted_cash" value="0">
 
-            <div style="margin-top:1.25rem;padding:0.75rem;background:var(--bg-card);border-radius:var(--radius-md);display:flex;justify-content:space-between;align-items:center;">
+            <!-- Sensor Total & Real-time Verification Badge -->
+            <div style="padding:0.85rem;background:var(--bg-card);border-radius:var(--radius-md);border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
                 <div>
-                    <div style="font-size:0.75rem;color:var(--text-secondary);">Sensor Counted Cash:</div>
-                    <div class="mono" id="counted-display" style="font-size:1.15rem;font-weight:700;">৳ 0.00</div>
+                    <div style="font-size:0.75rem;color:var(--text-secondary);">ATM Sensor Counted Cash:</div>
+                    <div class="mono" id="counted-display" style="font-size:1.25rem;font-weight:700;">৳ 0.00</div>
                 </div>
                 <div id="mismatch-badge" class="status-badge status-pending" style="font-size:0.8rem;">
-                    Insert cash into slot
+                    Scanning cash slot...
                 </div>
             </div>
         </div>
@@ -93,50 +106,42 @@
 
 {% block scripts %}
 <script>
-function calculateCountedCash() {
-    const n1000 = parseInt(document.getElementById('notes-1000').value || 0);
-    const n500  = parseInt(document.getElementById('notes-500').value || 0);
-    const n200  = parseInt(document.getElementById('notes-200').value || 0);
-    const n100  = parseInt(document.getElementById('notes-100').value || 0);
+// State of detected banknotes (hardware-controlled)
+let sensorNotes = { 1000: 0, 500: 0, 200: 0, 100: 0 };
 
-    const total = (n1000 * 1000) + (n500 * 500) + (n200 * 200) + (n100 * 100);
+function updateSensorUI() {
+    document.getElementById('disp-1000').textContent = sensorNotes[1000] + ' notes (৳' + (sensorNotes[1000] * 1000) + ')';
+    document.getElementById('disp-500').textContent  = sensorNotes[500]  + ' notes (৳' + (sensorNotes[500] * 500)   + ')';
+    document.getElementById('disp-200').textContent  = sensorNotes[200]  + ' notes (৳' + (sensorNotes[200] * 200)   + ')';
+    document.getElementById('disp-100').textContent  = sensorNotes[100]  + ' notes (৳' + (sensorNotes[100] * 100)   + ')';
+
+    const total = (sensorNotes[1000] * 1000) + (sensorNotes[500] * 500) + (sensorNotes[200] * 200) + (sensorNotes[100] * 100);
     document.getElementById('counted_cash').value = total;
     document.getElementById('counted-display').textContent = '৳ ' + total.toFixed(2);
-    checkMismatch();
-}
 
-function checkMismatch() {
     const declared = parseFloat(document.getElementById('amount').value || 0);
-    const counted  = parseFloat(document.getElementById('counted_cash').value || 0);
-    const badge    = document.getElementById('mismatch-badge');
+    const badge = document.getElementById('mismatch-badge');
 
-    if (declared <= 0 && counted <= 0) {
+    if (declared <= 0 && total <= 0) {
         badge.className = 'status-badge status-pending';
-        badge.textContent = 'Insert cash into slot';
+        badge.textContent = 'Deposit slot empty';
         return;
     }
 
-    if (Math.abs(declared - counted) < 0.01 && declared > 0) {
+    if (Math.abs(declared - total) < 0.01 && declared > 0) {
         badge.className = 'status-badge status-active';
         badge.textContent = '✅ Amount Verified & Matched';
     } else {
         badge.className = 'status-badge status-inactive';
-        badge.textContent = `⚠️ Mismatch: Tray (৳${counted}) ≠ Declared (৳${declared})`;
+        badge.textContent = `⚠️ Mismatch: Sensor (৳${total}) ≠ Declared (৳${declared})`;
     }
 }
 
-function setPreset(val) {
-    document.getElementById('amount').value = val;
-    autoMatchTray();
-}
+function sensorScanAndMatch() {
+    let amt = parseFloat(document.getElementById('amount').value || 0);
+    if (amt <= 0) amt = 1000;
 
-function autoMatchTray() {
-    let rem = parseFloat(document.getElementById('amount').value || 0);
-    if (rem <= 0) {
-        rem = 1000;
-        document.getElementById('amount').value = rem;
-    }
-
+    let rem = amt;
     const n1000 = Math.floor(rem / 1000);
     rem = rem % 1000;
 
@@ -148,18 +153,42 @@ function autoMatchTray() {
 
     const n100 = Math.floor(rem / 100);
 
-    document.getElementById('notes-1000').value = n1000;
-    document.getElementById('notes-500').value = n500;
-    document.getElementById('notes-200').value = n200;
-    document.getElementById('notes-100').value = n100;
-
-    calculateCountedCash();
+    sensorNotes = { 1000: n1000, 500: n500, 200: n200, 100: n100 };
+    updateSensorUI();
 }
 
-// Default initialize tray matching
+function sensorSimulateRejection() {
+    // Simulates an ATM bill rejector spitting out a bent or damaged bill
+    if (sensorNotes[1000] > 0) {
+        sensorNotes[1000] -= 1;
+    } else if (sensorNotes[500] > 0) {
+        sensorNotes[500] -= 1;
+    } else if (sensorNotes[200] > 0) {
+        sensorNotes[200] -= 1;
+    } else if (sensorNotes[100] > 0) {
+        sensorNotes[100] -= 1;
+    }
+    updateSensorUI();
+}
+
+function sensorClearTray() {
+    sensorNotes = { 1000: 0, 500: 0, 200: 0, 100: 0 };
+    updateSensorUI();
+}
+
+function onDeclaredAmountChange() {
+    sensorScanAndMatch();
+}
+
+function setDeclaredPreset(val) {
+    document.getElementById('amount').value = val;
+    sensorScanAndMatch();
+}
+
+// Initial load
 window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('amount').value = 1000;
-    autoMatchTray();
+    sensorScanAndMatch();
 });
 </script>
 {% endblock %}
