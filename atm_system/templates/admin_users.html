@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Manage Users — Admin{% endblock %}
+
+{% block content %}
+<div class="page-header fade-up">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+        <div>
+            <h1>👥 User Management</h1>
+            <p>View registered cardholders, control access, and unlock accounts</p>
+        </div>
+        <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-secondary btn-sm">
+            ← Admin Dashboard
+        </a>
+    </div>
+</div>
+
+<div class="card fade-up-1">
+    {% if users %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Full Name</th>
+                    <th>Card Number</th>
+                    <th>Contact</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Failed Attempts</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td class="mono">#{{ u.id }}</td>
+                    <td><strong>{{ u.full_name }}</strong></td>
+                    <td class="mono">{{ u.card_number }}</td>
+                    <td>
+                        <div>{{ u.email }}</div>
+                        <small style="color:var(--text-muted);">{{ u.phone }}</small>
+                    </td>
+                    <td>
+                        <span class="status-badge {{ 'status-active' if u.is_admin else 'status-pending' }}">
+                            {{ 'Admin' if u.is_admin else 'User' }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="status-badge {{ 'status-active' if u.is_active else 'status-inactive' }}">
+                            {{ 'Active' if u.is_active else 'Disabled' }}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <span class="mono" style="color:{% if u.login_attempts > 0 %}var(--error){% else %}var(--text-muted){% endif %};">
+                            {{ u.login_attempts }}
+                        </span>
+                    </td>
+                    <td>
+                        <div style="display:flex;gap:0.5rem;">
+                            {% if not u.is_admin %}
+                            <a href="{{ url_for('admin.toggle_user', user_id=u.id) }}"
+                               class="btn {{ 'btn-danger' if u.is_active else 'btn-success' }} btn-sm"
+                               onclick="return confirm('Change status for this user?');">
+                                {{ 'Deactivate' if u.is_active else 'Activate' }}
+                            </a>
+                            {% endif %}
+                            {% if u.login_attempts > 0 %}
+                            <a href="{{ url_for('admin.unlock_user', user_id=u.id) }}" class="btn btn-secondary btn-sm">
+                                🔓 Unlock
+                            </a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">👥</div>
+        <p>No users found in system.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

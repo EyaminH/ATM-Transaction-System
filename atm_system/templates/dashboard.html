@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — ATM System{% endblock %}
+
+{% block content %}
+<div class="page-header fade-up">
+    <h1>Welcome, {{ session.get('user_name', 'User') }} 👋</h1>
+    <p>Here's your account overview</p>
+</div>
+
+<!-- Account Cards -->
+<div class="account-cards fade-up-1">
+    {% for account in accounts %}
+    <div class="account-card">
+        <div>
+            <div class="account-type">{{ account.account_type }} Account</div>
+            <div class="account-number">{{ account.account_number }}</div>
+        </div>
+        <div>
+            <div class="balance-label">Available Balance</div>
+            <div class="balance-amount">৳ {{ "%.2f"|format(account.balance) }}</div>
+        </div>
+    </div>
+    {% endfor %}
+
+    {% if not accounts %}
+    <div class="empty-state">
+        <div class="empty-icon">🏦</div>
+        <p>No accounts found. Contact the bank to open an account.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Quick Actions -->
+<h2 class="mb-2 fade-up-2" style="font-size:1.1rem;font-weight:600;">Quick Actions</h2>
+<div class="action-grid fade-up-2">
+    <a href="{{ url_for('transaction.withdraw') }}" class="action-card" id="action-withdraw">
+        <span class="action-icon">💸</span>
+        <span class="action-label">Withdraw</span>
+    </a>
+    <a href="{{ url_for('transaction.deposit') }}" class="action-card" id="action-deposit">
+        <span class="action-icon">💰</span>
+        <span class="action-label">Deposit</span>
+    </a>
+    <a href="{{ url_for('transaction.transfer') }}" class="action-card" id="action-transfer">
+        <span class="action-icon">🔄</span>
+        <span class="action-label">Transfer</span>
+    </a>
+    <a href="{{ url_for('history.transaction_history') }}" class="action-card" id="action-history">
+        <span class="action-icon">📋</span>
+        <span class="action-label">History</span>
+    </a>
+    {% if accounts %}
+    <a href="{{ url_for('history.statement', account_id=accounts[0].id) }}" class="action-card" id="action-statement">
+        <span class="action-icon">📄</span>
+        <span class="action-label">Statement</span>
+    </a>
+    {% endif %}
+    <a href="{{ url_for('auth.change_pin') }}" class="action-card" id="action-pin">
+        <span class="action-icon">🔐</span>
+        <span class="action-label">Change PIN</span>
+    </a>
+</div>
+
+<!-- Recent Transactions -->
+<div class="card fade-up-3">
+    <div class="card-header">
+        <h2>Recent Transactions</h2>
+        <a href="{{ url_for('history.transaction_history') }}" class="btn btn-secondary btn-sm">View All</a>
+    </div>
+    {% if recent_transactions %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Balance After</th>
+                    <th>Description</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tx in recent_transactions %}
+                <tr>
+                    <td>
+                        {% if tx.transaction_type == 'withdrawal' %}💸
+                        {% elif tx.transaction_type == 'deposit' %}💰
+                        {% elif tx.transaction_type == 'transfer' %}🔄
+                        {% elif tx.transaction_type == 'transfer_in' %}📥
+                        {% endif %}
+                        {{ tx.transaction_type | replace('_', ' ') | title }}
+                    </td>
+                    <td class="{{ 'amount-positive' if tx.transaction_type in ['deposit', 'transfer_in'] else 'amount-negative' }}">
+                        {{ '+' if tx.transaction_type in ['deposit', 'transfer_in'] else '-' }}৳{{ "%.2f"|format(tx.amount) }}
+                    </td>
+                    <td class="mono">৳{{ "%.2f"|format(tx.balance_after) }}</td>
+                    <td>{{ tx.description }}</td>
+                    <td style="white-space:nowrap;">{{ tx.created_at }}</td>
+                    <td><span class="status-badge status-{{ tx.status }}">{{ tx.status }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <p>No transactions yet. Start by making a deposit!</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

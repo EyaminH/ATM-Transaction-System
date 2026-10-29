@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Notifications — ATM System{% endblock %}
+
+{% block content %}
+<div class="page-header fade-up">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+        <div>
+            <h1>🔔 Notifications</h1>
+            <p>Transaction alerts and security messages</p>
+        </div>
+        {% if notifications %}
+        <a href="{{ url_for('history.mark_all_read') }}" class="btn btn-secondary btn-sm" id="btn-read-all">
+            ✓ Mark All as Read
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card fade-up-1">
+    {% if notifications %}
+        <div class="notification-list">
+            {% for n in notifications %}
+            <div class="notification-item {% if not n.is_read %}unread{% endif %}" id="notif-{{ n.id }}">
+                <div class="notif-icon">
+                    {% if 'Withdrawal' in n.message %}💸
+                    {% elif 'Deposit' in n.message %}💰
+                    {% elif 'Transfer' in n.message %}🔄
+                    {% elif 'PIN' in n.message %}🔐
+                    {% else %}ℹ️{% endif %}
+                </div>
+                <div class="notif-content">
+                    <div class="notif-message">{{ n.message }}</div>
+                    <div class="notif-time">{{ n.created_at }}</div>
+                </div>
+                {% if not n.is_read %}
+                <a href="{{ url_for('history.mark_read', notification_id=n.id) }}" class="btn btn-secondary btn-sm" style="font-size:0.75rem;padding:0.25rem 0.6rem;">
+                    Mark Read
+                </a>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">🔔</div>
+        <p>No notifications yet. You'll see transaction alerts and system updates here.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}All Transactions — Admin{% endblock %}
+
+{% block content %}
+<div class="page-header fade-up">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+        <div>
+            <h1>📜 Global Transaction Log</h1>
+            <p>Real-time audit log of all financial transactions across the ATM network</p>
+        </div>
+        <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-secondary btn-sm">
+            ← Admin Dashboard
+        </a>
+    </div>
+</div>
+
+<div class="card fade-up-1">
+    {% if transactions %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Ref ID</th>
+                    <th>User</th>
+                    <th>Account</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Balance After</th>
+                    <th>Description</th>
+                    <th>Timestamp</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tx in transactions %}
+                <tr>
+                    <td class="mono" style="font-size:0.8rem;color:var(--text-muted);">#{{ tx.id }}</td>
+                    <td><strong>{{ tx.full_name }}</strong></td>
+                    <td class="mono">{{ tx.account_number }}</td>
+                    <td>
+                        {% if tx.transaction_type == 'withdrawal' %}💸
+                        {% elif tx.transaction_type == 'deposit' %}💰
+                        {% elif tx.transaction_type == 'transfer' %}🔄
+                        {% elif tx.transaction_type == 'transfer_in' %}📥
+                        {% endif %}
+                        {{ tx.transaction_type | replace('_', ' ') | title }}
+                    </td>
+                    <td class="{{ 'amount-positive' if tx.transaction_type in ['deposit', 'transfer_in'] else 'amount-negative' }}">
+                        {{ '+' if tx.transaction_type in ['deposit', 'transfer_in'] else '-' }}৳{{ "%.2f"|format(tx.amount) }}
+                    </td>
+                    <td class="mono">৳{{ "%.2f"|format(tx.balance_after) }}</td>
+                    <td>{{ tx.description }}</td>
+                    <td style="white-space:nowrap;font-size:0.85rem;color:var(--text-secondary);">{{ tx.created_at }}</td>
+                    <td><span class="status-badge status-{{ tx.status }}">{{ tx.status }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <p>No transactions found.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard — ATM System{% endblock %}
+
+{% block content %}
+<div class="page-header fade-up">
+    <h1>⚙️ System Administration</h1>
+    <p>Overall ATM network metrics and operational monitoring</p>
+</div>
+
+<!-- Stats Grid -->
+<div class="stats-grid fade-up-1">
+    <div class="stat-card purple">
+        <div class="stat-icon">👥</div>
+        <div class="stat-value">{{ stats.total_users }}</div>
+        <div class="stat-label">Total Users ({{ stats.active_users }} active)</div>
+    </div>
+    <div class="stat-card blue">
+        <div class="stat-icon">🏦</div>
+        <div class="stat-value">{{ stats.total_accounts }}</div>
+        <div class="stat-label">Registered Accounts</div>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-icon">💵</div>
+        <div class="stat-value">৳{{ "%.2f"|format(stats.total_balance) }}</div>
+        <div class="stat-label">Total Vault & Balance</div>
+    </div>
+    <div class="stat-card orange">
+        <div class="stat-icon">📊</div>
+        <div class="stat-value">{{ stats.total_transactions }}</div>
+        <div class="stat-label">Total Transactions ({{ stats.today_transactions }} today)</div>
+    </div>
+</div>
+
+<!-- Admin Quick Actions -->
+<div class="card fade-up-2" style="margin-bottom:1.5rem;">
+    <div class="card-header">
+        <h2>Quick Management</h2>
+    </div>
+    <div class="action-grid" style="margin-bottom:0;">
+        <a href="{{ url_for('admin.manage_users') }}" class="action-card">
+            <span class="action-icon">👥</span>
+            <span class="action-label">Manage Users</span>
+        </a>
+        <a href="{{ url_for('admin.manage_accounts') }}" class="action-card">
+            <span class="action-icon">🏦</span>
+            <span class="action-label">All Accounts</span>
+        </a>
+        <a href="{{ url_for('admin.all_transactions') }}" class="action-card">
+            <span class="action-icon">📜</span>
+            <span class="action-label">Transaction Log</span>
+        </a>
+        <a href="{{ url_for('admin.audit_log') }}" class="action-card">
+            <span class="action-icon">🛡️</span>
+            <span class="action-label">Audit Trail</span>
+        </a>
+    </div>
+</div>
+
+<!-- Transaction Summary by Type -->
+<div class="card fade-up-3">
+    <div class="card-header">
+        <h2>Transaction Activity Summary</h2>
+    </div>
+    {% if tx_summary %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Count</th>
+                    <th>Total Volume</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in tx_summary %}
+                <tr>
+                    <td>
+                        {% if item.transaction_type == 'withdrawal' %}💸
+                        {% elif item.transaction_type == 'deposit' %}💰
+                        {% elif item.transaction_type == 'transfer' %}🔄
+                        {% elif item.transaction_type == 'transfer_in' %}📥
+                        {% endif %}
+                        {{ item.transaction_type | replace('_', ' ') | title }}
+                    </td>
+                    <td><strong>{{ item.count }}</strong></td>
+                    <td class="mono">৳{{ "%.2f"|format(item.total_amount) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <p>No transaction data available yet.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Withdraw — ATM System{% endblock %}
+
+{% block content %}
+<div class="page-header fade-up">
+    <h1>💸 Cash Withdrawal</h1>
+    <p>Withdraw cash from your account</p>
+</div>
+
+<div class="card fade-up-1">
+    <form method="POST" action="{{ url_for('transaction.withdraw') }}" class="transaction-form" id="withdraw-form">
+        <div class="form-group">
+            <label for="account_id">Select Account</label>
+            <select name="account_id" id="account_id" class="form-control" required>
+                {% for account in accounts %}
+                <option value="{{ account.id }}">
+                    {{ account.account_type | title }} — {{ account.account_number }} (৳{{ "%.2f"|format(account.balance) }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="amount-display">
+            <div class="currency">৳</div>
+            <input type="number" name="amount" id="amount" placeholder="0.00"
+                   min="100" step="100" required>
+        </div>
+
+        <div class="action-grid" style="margin-bottom:1.5rem;">
+            <div class="action-card" onclick="setAmount(500)" style="cursor:pointer;">৳500</div>
+            <div class="action-card" onclick="setAmount(1000)" style="cursor:pointer;">৳1,000</div>
+            <div class="action-card" onclick="setAmount(2000)" style="cursor:pointer;">৳2,000</div>
+            <div class="action-card" onclick="setAmount(5000)" style="cursor:pointer;">৳5,000</div>
+            <div class="action-card" onclick="setAmount(10000)" style="cursor:pointer;">৳10,000</div>
+            <div class="action-card" onclick="setAmount(20000)" style="cursor:pointer;">৳20,000</div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" id="btn-withdraw">
+            💸 Withdraw Cash
+        </button>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function setAmount(val) {
+    document.getElementById('amount').value = val;
+}
+</script>
+{% endblock %}

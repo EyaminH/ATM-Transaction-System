@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ATM Transaction System — Secure banking at your fingertips">
+    <title>{% block title %}ATM System{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    {% if session.get('user_id') %}
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-logo">
+                <div class="icon">🏧</div>
+                <div>
+                    <h2>ATM System</h2>
+                    <span>Transaction Portal</span>
+                </div>
+            </div>
+
+            <nav>
+                <div class="nav-section">
+                    <div class="nav-section-title">Main</div>
+                    <a href="{{ url_for('account.dashboard') }}" class="nav-link {% if request.endpoint == 'account.dashboard' %}active{% endif %}" id="nav-dashboard">
+                        <span class="nav-icon">📊</span> Dashboard
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Transactions</div>
+                    <a href="{{ url_for('transaction.withdraw') }}" class="nav-link {% if request.endpoint == 'transaction.withdraw' %}active{% endif %}" id="nav-withdraw">
+                        <span class="nav-icon">💸</span> Withdraw
+                    </a>
+                    <a href="{{ url_for('transaction.deposit') }}" class="nav-link {% if request.endpoint == 'transaction.deposit' %}active{% endif %}" id="nav-deposit">
+                        <span class="nav-icon">💰</span> Deposit
+                    </a>
+                    <a href="{{ url_for('transaction.transfer') }}" class="nav-link {% if request.endpoint == 'transaction.transfer' %}active{% endif %}" id="nav-transfer">
+                        <span class="nav-icon">🔄</span> Transfer
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Account</div>
+                    <a href="{{ url_for('history.transaction_history') }}" class="nav-link {% if request.endpoint == 'history.transaction_history' %}active{% endif %}" id="nav-history">
+                        <span class="nav-icon">📋</span> History
+                    </a>
+                    <a href="{{ url_for('history.notifications') }}" class="nav-link {% if request.endpoint == 'history.notifications' %}active{% endif %}" id="nav-notifications">
+                        <span class="nav-icon">🔔</span> Notifications
+                    </a>
+                    <a href="{{ url_for('auth.change_pin') }}" class="nav-link {% if request.endpoint == 'auth.change_pin' %}active{% endif %}" id="nav-change-pin">
+                        <span class="nav-icon">🔐</span> Change PIN
+                    </a>
+                </div>
+
+                {% if session.get('is_admin') %}
+                <div class="nav-section">
+                    <div class="nav-section-title">Admin</div>
+                    <a href="{{ url_for('admin.admin_dashboard') }}" class="nav-link {% if request.endpoint == 'admin.admin_dashboard' %}active{% endif %}" id="nav-admin">
+                        <span class="nav-icon">⚙️</span> Admin Panel
+                    </a>
+                    <a href="{{ url_for('admin.manage_users') }}" class="nav-link {% if request.endpoint == 'admin.manage_users' %}active{% endif %}" id="nav-admin-users">
+                        <span class="nav-icon">👥</span> Users
+                    </a>
+                    <a href="{{ url_for('admin.manage_accounts') }}" class="nav-link {% if request.endpoint == 'admin.manage_accounts' %}active{% endif %}" id="nav-admin-accounts">
+                        <span class="nav-icon">🏦</span> Accounts
+                    </a>
+                    <a href="{{ url_for('admin.all_transactions') }}" class="nav-link {% if request.endpoint == 'admin.all_transactions' %}active{% endif %}" id="nav-admin-tx">
+                        <span class="nav-icon">📜</span> All Transactions
+                    </a>
+                    <a href="{{ url_for('admin.audit_log') }}" class="nav-link {% if request.endpoint == 'admin.audit_log' %}active{% endif %}" id="nav-admin-audit">
+                        <span class="nav-icon">🛡️</span> Audit Log
+                    </a>
+                </div>
+                {% endif %}
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">{{ session.get('user_name', 'U')[0] }}</div>
+                    <div>
+                        <div class="name">{{ session.get('user_name', 'User') }}</div>
+                        <div class="role">{{ 'Administrator' if session.get('is_admin') else 'Account Holder' }}</div>
+                    </div>
+                </div>
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-secondary btn-block btn-sm" id="btn-logout">
+                    🚪 Logout
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}" id="flash-{{ loop.index }}">
+                        {% if category == 'success' %}✅{% elif category == 'error' %}❌{% elif category == 'info' %}ℹ️{% else %}⚠️{% endif %}
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    {% else %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="flash-messages" style="position:fixed;top:1rem;right:1rem;left:1rem;z-index:1000;max-width:500px;margin:0 auto;">
+                {% for category, message in messages %}
+                <div class="flash flash-{{ category }}">
+                    {% if category == 'success' %}✅{% elif category == 'error' %}❌{% elif category == 'info' %}ℹ️{% else %}⚠️{% endif %}
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+        {% block guest_content %}{% endblock %}
+    {% endif %}
+
+    <script>
+        // Auto-dismiss flash messages
+        setTimeout(() => {
+            document.querySelectorAll('.flash').forEach(el => {
+                el.style.transition = 'opacity 0.5s, transform 0.5s';
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(-10px)';
+                setTimeout(() => el.remove(), 500);
+            });
+        }, 5000);
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

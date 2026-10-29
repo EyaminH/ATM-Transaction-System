@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Login — ATM System{% endblock %}
+
+{% block guest_content %}
+<div class="login-container">
+    <div class="login-card">
+        <div class="logo">
+            <div class="logo-icon">🏧</div>
+            <h1>ATM System</h1>
+            <p class="subtitle">Secure Transaction Portal</p>
+        </div>
+
+        <div class="demo-info">
+            <strong>Demo Accounts:</strong><br>
+            Admin: Card <code>1111222233334444</code> PIN <code>1234</code><br>
+            User 1: Card <code>5555666677778888</code> PIN <code>5678</code><br>
+            User 2: Card <code>9999000011112222</code> PIN <code>4321</code>
+        </div>
+
+        <form method="POST" action="{{ url_for('auth.login') }}" id="login-form">
+            <div class="form-group">
+                <label for="card_number">Card Number</label>
+                <input type="text" id="card_number" name="card_number"
+                       class="form-control" placeholder="Enter 16-digit card number"
+                       maxlength="16" required autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label for="pin">PIN</label>
+                <input type="password" id="pin" name="pin"
+                       class="form-control" placeholder="Enter your PIN"
+                       maxlength="6" required autocomplete="off">
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block" id="btn-login">
+                🔓 Login
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
