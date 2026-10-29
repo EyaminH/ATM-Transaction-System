@@ -136,7 +136,7 @@ class DepositStrategy(TransactionStrategy):
         self.config = config
 
     def validate(self, account, amount, **kwargs):
-        """Validate deposit — amount must be positive and above minimum."""
+        """Validate deposit — amount must be positive, above minimum, and match physically counted cash."""
         errors = []
         if amount <= 0:
             errors.append("Deposit amount must be positive.")
@@ -144,6 +144,15 @@ class DepositStrategy(TransactionStrategy):
             errors.append(
                 f"Minimum deposit is ৳{self.config.MIN_DEPOSIT_AMOUNT:.2f}."
             )
+
+        # Physical Cash Deposit Machine (CDM) bill-sensor verification:
+        counted_cash = kwargs.get("counted_cash")
+        if counted_cash is not None:
+            if abs(counted_cash - amount) > 0.01:
+                errors.append(
+                    f"Cash Deposit Mismatch: Entered amount (৳{amount:.2f}) does not match the counted cash in the deposit slot (৳{counted_cash:.2f}). Cash has been returned to the tray."
+                )
+
         return errors
 
     def execute(self, account, amount, db_manager, **kwargs):

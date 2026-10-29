@@ -75,6 +75,17 @@ class TestDepositStrategy:
         assert any("positive" in e for e in strategy.validate(account, -100))
         assert any("Minimum deposit" in e for e in strategy.validate(account, TestConfig.MIN_DEPOSIT_AMOUNT - 50))
 
+    def test_validate_cash_sensor_mismatch(self):
+        strategy = DepositStrategy(TestConfig)
+        account = {"id": 1, "balance": 1000.0}
+        # Claimed 5000 but slot has only 3000
+        errors = strategy.validate(account, 5000.0, counted_cash=3000.0)
+        assert any("Cash Deposit Mismatch" in e for e in errors)
+
+        # Claimed 5000 and slot has exactly 5000
+        errors_match = strategy.validate(account, 5000.0, counted_cash=5000.0)
+        assert not errors_match
+
     def test_execute_deposit(self, test_db, account_service, sample_user):
         acc = sample_user["account"]
         strategy = DepositStrategy(TestConfig)

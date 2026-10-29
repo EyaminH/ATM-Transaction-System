@@ -56,8 +56,14 @@ def deposit():
             flash("Please enter a valid amount.", "error")
             return render_template("deposit.html", accounts=accounts)
 
+        counted_cash_str = request.form.get("counted_cash", "").strip()
+        try:
+            counted_cash = float(counted_cash_str) if counted_cash_str else None
+        except ValueError:
+            counted_cash = None
+
         result = transaction_service.deposit(
-            account_id, amount, user_id=session["user_id"]
+            account_id, amount, user_id=session["user_id"], counted_cash=counted_cash
         )
         if result["success"]:
             flash(result["message"], "success")

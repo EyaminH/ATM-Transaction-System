@@ -59,7 +59,7 @@ class TransactionService:
 
         return result
 
-    def deposit(self, account_id, amount, user_id=None):
+    def deposit(self, account_id, amount, user_id=None, counted_cash=None):
         """Process a cash deposit."""
         account = self.account_service.get_account_by_id(account_id)
         if not account:
@@ -68,7 +68,7 @@ class TransactionService:
             return {"success": False, "errors": ["Account is inactive."]}
 
         context = TransactionContext(self._strategies["deposit"])
-        result = context.process(account, amount, self.db)
+        result = context.process(account, amount, self.db, counted_cash=counted_cash)
 
         if result["success"]:
             self._notify("deposit", {

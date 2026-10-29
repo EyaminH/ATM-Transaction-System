@@ -1,16 +1,17 @@
 {% extends "base.html" %}
-{% block title %}Deposit — ATM System{% endblock %}
+{% block title %}Cash Deposit — CDM Portal{% endblock %}
 
 {% block content %}
 <div class="page-header fade-up">
-    <h1>💰 Cash Deposit</h1>
-    <p>Deposit cash into your account</p>
+    <h1>💰 Cash Deposit Machine (CDM)</h1>
+    <p>Insert banknotes into the cash slot and verify denomination counting</p>
 </div>
 
-<div class="card fade-up-1">
+<div class="card fade-up-1" style="max-width:620px;">
     <form method="POST" action="{{ url_for('transaction.deposit') }}" class="transaction-form" id="deposit-form">
+        <!-- 1. Select Account -->
         <div class="form-group">
-            <label for="account_id">Select Account</label>
+            <label for="account_id">Destination Account</label>
             <select name="account_id" id="account_id" class="form-control" required>
                 {% for account in accounts %}
                 <option value="{{ account.id }}">
@@ -20,21 +21,71 @@
             </select>
         </div>
 
-        <div class="amount-display">
-            <div class="currency">৳</div>
-            <input type="number" name="amount" id="amount" placeholder="0.00"
-                   min="100" step="100" required>
+        <!-- 2. Declared Deposit Amount -->
+        <div class="form-group">
+            <label for="amount">Declared Deposit Amount (৳)</label>
+            <div class="amount-display" style="padding:1.25rem;margin-bottom:0.75rem;">
+                <div class="currency">৳</div>
+                <input type="number" name="amount" id="amount" placeholder="0.00"
+                       min="100" step="100" required oninput="checkMismatch()">
+            </div>
+            <div class="action-grid" style="margin-bottom:1.5rem;grid-template-columns:repeat(4, 1fr);">
+                <div class="action-card" onclick="setPreset(1000)" style="cursor:pointer;padding:0.75rem;">৳1,000</div>
+                <div class="action-card" onclick="setPreset(2000)" style="cursor:pointer;padding:0.75rem;">৳2,000</div>
+                <div class="action-card" onclick="setPreset(5000)" style="cursor:pointer;padding:0.75rem;">৳5,000</div>
+                <div class="action-card" onclick="setPreset(10000)" style="cursor:pointer;padding:0.75rem;">৳10,000</div>
+            </div>
         </div>
 
-        <div class="action-grid" style="margin-bottom:1.5rem;">
-            <div class="action-card" onclick="setAmount(500)" style="cursor:pointer;">৳500</div>
-            <div class="action-card" onclick="setAmount(1000)" style="cursor:pointer;">৳1,000</div>
-            <div class="action-card" onclick="setAmount(5000)" style="cursor:pointer;">৳5,000</div>
-            <div class="action-card" onclick="setAmount(10000)" style="cursor:pointer;">৳10,000</div>
+        <!-- 3. Physical CDM Cash Slot Sensor & Bill Counter -->
+        <div style="background:var(--bg-glass-hover);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;margin-bottom:1.5rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+                <h3 style="font-size:1rem;font-weight:600;display:flex;align-items:center;gap:0.5rem;">
+                    <span>📥</span> Cash Deposit Slot Sensor (Banknote Counter)
+                </h3>
+                <button type="button" onclick="autoMatchTray()" class="btn btn-secondary btn-sm" style="font-size:0.75rem;padding:0.25rem 0.6rem;">
+                    ⚡ Auto-Match Tray
+                </button>
+            </div>
+            
+            <p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:1rem;">
+                Physical banknotes placed into the deposit slot are scanned by optical bill sensors.
+            </p>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+                <div>
+                    <label style="font-size:0.75rem;color:var(--text-secondary);">৳1,000 Notes</label>
+                    <input type="number" id="notes-1000" class="form-control" value="0" min="0" oninput="calculateCountedCash()">
+                </div>
+                <div>
+                    <label style="font-size:0.75rem;color:var(--text-secondary);">৳500 Notes</label>
+                    <input type="number" id="notes-500" class="form-control" value="0" min="0" oninput="calculateCountedCash()">
+                </div>
+                <div>
+                    <label style="font-size:0.75rem;color:var(--text-secondary);">৳200 Notes</label>
+                    <input type="number" id="notes-200" class="form-control" value="0" min="0" oninput="calculateCountedCash()">
+                </div>
+                <div>
+                    <label style="font-size:0.75rem;color:var(--text-secondary);">৳100 Notes</label>
+                    <input type="number" id="notes-100" class="form-control" value="0" min="0" oninput="calculateCountedCash()">
+                </div>
+            </div>
+
+            <input type="hidden" name="counted_cash" id="counted_cash" value="0">
+
+            <div style="margin-top:1.25rem;padding:0.75rem;background:var(--bg-card);border-radius:var(--radius-md);display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <div style="font-size:0.75rem;color:var(--text-secondary);">Sensor Counted Cash:</div>
+                    <div class="mono" id="counted-display" style="font-size:1.15rem;font-weight:700;">৳ 0.00</div>
+                </div>
+                <div id="mismatch-badge" class="status-badge status-pending" style="font-size:0.8rem;">
+                    Insert cash into slot
+                </div>
+            </div>
         </div>
 
         <button type="submit" class="btn btn-primary btn-block" id="btn-deposit">
-            💰 Deposit Cash
+            💰 Accept & Deposit Cash
         </button>
     </form>
 </div>
@@ -42,8 +93,73 @@
 
 {% block scripts %}
 <script>
-function setAmount(val) {
-    document.getElementById('amount').value = val;
+function calculateCountedCash() {
+    const n1000 = parseInt(document.getElementById('notes-1000').value || 0);
+    const n500  = parseInt(document.getElementById('notes-500').value || 0);
+    const n200  = parseInt(document.getElementById('notes-200').value || 0);
+    const n100  = parseInt(document.getElementById('notes-100').value || 0);
+
+    const total = (n1000 * 1000) + (n500 * 500) + (n200 * 200) + (n100 * 100);
+    document.getElementById('counted_cash').value = total;
+    document.getElementById('counted-display').textContent = '৳ ' + total.toFixed(2);
+    checkMismatch();
 }
+
+function checkMismatch() {
+    const declared = parseFloat(document.getElementById('amount').value || 0);
+    const counted  = parseFloat(document.getElementById('counted_cash').value || 0);
+    const badge    = document.getElementById('mismatch-badge');
+
+    if (declared <= 0 && counted <= 0) {
+        badge.className = 'status-badge status-pending';
+        badge.textContent = 'Insert cash into slot';
+        return;
+    }
+
+    if (Math.abs(declared - counted) < 0.01 && declared > 0) {
+        badge.className = 'status-badge status-active';
+        badge.textContent = '✅ Amount Verified & Matched';
+    } else {
+        badge.className = 'status-badge status-inactive';
+        badge.textContent = `⚠️ Mismatch: Tray (৳${counted}) ≠ Declared (৳${declared})`;
+    }
+}
+
+function setPreset(val) {
+    document.getElementById('amount').value = val;
+    autoMatchTray();
+}
+
+function autoMatchTray() {
+    let rem = parseFloat(document.getElementById('amount').value || 0);
+    if (rem <= 0) {
+        rem = 1000;
+        document.getElementById('amount').value = rem;
+    }
+
+    const n1000 = Math.floor(rem / 1000);
+    rem = rem % 1000;
+
+    const n500 = Math.floor(rem / 500);
+    rem = rem % 500;
+
+    const n200 = Math.floor(rem / 200);
+    rem = rem % 200;
+
+    const n100 = Math.floor(rem / 100);
+
+    document.getElementById('notes-1000').value = n1000;
+    document.getElementById('notes-500').value = n500;
+    document.getElementById('notes-200').value = n200;
+    document.getElementById('notes-100').value = n100;
+
+    calculateCountedCash();
+}
+
+// Default initialize tray matching
+window.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('amount').value = 1000;
+    autoMatchTray();
+});
 </script>
 {% endblock %}

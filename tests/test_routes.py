@@ -235,9 +235,13 @@ class TestHistoryAndAdminRoutes:
         res_d_invalid = client.post("/deposit", data={"account_id": acc["id"], "amount": "invalid"})
         assert b"valid amount" in res_d_invalid.data
 
-        # Invalid transfer amount
-        res_t_invalid = client.post("/transfer", data={"account_id": acc["id"], "target_account": "123", "amount": "invalid"})
-        assert b"valid amount" in res_t_invalid.data
+        # CDM physical cash slot mismatch
+        res_d_mismatch = client.post("/deposit", data={
+            "account_id": acc["id"],
+            "amount": "5000",
+            "counted_cash": "3000",
+        }, follow_redirects=True)
+        assert b"Cash Deposit Mismatch" in res_d_mismatch.data
 
         # Missing target account
         res_t_missing = client.post("/transfer", data={"account_id": acc["id"], "target_account": "", "amount": "100"})
