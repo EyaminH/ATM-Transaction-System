@@ -41,3 +41,18 @@ coverage.xml
 .idea/
 .vscode/
 *.swp
+
+# LaTeX & PDF Documents
+*.tex
+*.pdf
+screenshots/
+
+# LaTeX Build Auxiliaries
+*.aux
+*.log
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+
